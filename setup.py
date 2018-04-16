@@ -32,7 +32,7 @@ setup(
     ],
     keywords='bibliography graph',
     packages=find_packages(exclude=['contrib', 'docs', 'tests', 'samples']),
-    install_requires=['numpy', 'pandas', 'matplotlib', 'graph-tool'],
+    install_requires=['numpy', 'pandas', 'matplotlib'],
     extras_require={},
     # setup_requires=['pytest-runner'],
     # tests_require=['pytest'],

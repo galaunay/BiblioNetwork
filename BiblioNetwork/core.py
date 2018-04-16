@@ -55,8 +55,6 @@ class BiblioNetwork():
     def _split_authors(row):
         "Split authors of the row"
         auth = row['Authors'].split(", ")
-        auth = [", ".join(auth[2*i:2*i+2])
-                for i in range(int(len(auth)/2))]
         return auth
 
     def parse(self, nmb_to_import=None, delimiter=","):
@@ -267,22 +265,42 @@ class BiblioNetwork():
             raise ValueError()
 
     def display_article_graph(self, out="graph.pdf", min_size=1,
-                              max_size=10, indice=False):
+                              max_size=10, indice=False,
+                              annotations=False,
+                              font_size=10):
         """Display an article graph
 
         One point per article.
         Size and color corespond to the number of citation.
         """
         cb = np.log(np.array(self.graph.vp.nmb_citation.a)+2)
-        ms = cb/max(cb)*(max_size - min_size) + min_size
-        ms = self.graph.new_vertex_property('float', ms)
+        tmp_ms = cb/max(cb)*(max_size - min_size) + min_size
+        ms = self.graph.new_vertex_property('float', tmp_ms)
+        # Get index
+        if annotations:
+            text = ["{} et al. ({})"
+                    .format(self.db['Authors'][i][0],
+                            self.db['Year'][i])
+                    for i in range(len(self.db))]
+            textg = self.graph.new_vertex_property('string', text)
+        else:
+            textg = None
+        # Get vertex display order
+        vorder = np.argsort(ms)
+        # plot
+        vorderg = self.graph.new_vertex_property('int', vorder)
         graph_draw(self.graph, pos=self.layout_pos, output=out,
+                   vorder=vorderg,
                    vertex_size=ms,
+                   vertex_text=textg,
+                   vertex_text_position=0,
+                   vertex_pen_width=min_size/10,
+                   vertex_font_size=font_size,
                    vertex_fill_color=self.graph.vp.nmb_citation,
                    vcmap=plt.cm.viridis)
 
     def display_author_graph(self, out="graph.pdf", min_size=1, max_size=10,
-                             indice=False):
+                             annotations=True, font_size=10):
         """Display an author graph """
         auths = self.author_list
         nc = self.get_total_citation()
@@ -302,8 +320,8 @@ class BiblioNetwork():
         # Get vertex display order
         vorder = np.argsort(nc)
         # Get index
-        if indice:
-            text = range(len(vorder))
+        if annotations:
+            text = auths
             textg = self.graph.new_vertex_property('string', text)
         else:
             textg = None
@@ -314,10 +332,13 @@ class BiblioNetwork():
         weightg = self.graph.new_edge_property('float', weight)
         self.graph.vp['nmb_citation'] = ncg
         graph_draw(self.graph, pos=self.layout_pos, output=out,
-                   vertex_fill_color=nag, vertex_size=ncg,
-                   edge_pen_width=weightg, vertex_text=textg,
-                   vorder=vorderg,
+                   vertex_fill_color=nag,
+                   vertex_size=ncg,
+                   vertex_pen_width=min_size/10,
+                   edge_pen_width=weightg,
+                   vertex_text=textg,
                    vertex_text_position=0,
+                   vertex_font_size=font_size,
                    vcmap=plt.cm.PuBu)
 
 
